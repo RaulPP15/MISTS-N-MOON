@@ -1,0 +1,29 @@
+const MOONS = ['Quarto Minguante', 'Lua Nova', 'Quarto Crescente', 'Lua Cheia'];
+const ART = {
+  shadow:'linear-gradient(135deg,#261d56,#5b397f 50%,#111a45)', stellar:'linear-gradient(135deg,#152c69,#8c79dc 50%,#152747)', ice:'linear-gradient(135deg,#173c59,#83d9e9 50%,#25366d)'
+};
+const GUARDIANS = [
+ {id:'veilkeeper',tipo:'guardiao',nome:'Nym, Guardiã da Névoa',imagem:'',hp:28,ataque:3,sombraInicial:3,sombraGanha:2,habilidade:'A primeira Oferta às Sombras de cada rodada concede +2 em vez de +1.',escola:'Penumbra',art:'shadow'},
+ {id:'starwarden',tipo:'guardiao',nome:'Orion, Vigia das Estrelas',imagem:'',hp:26,ataque:4,sombraInicial:4,sombraGanha:1,habilidade:'Ao iniciar seu turno, se tiver 2 ou menos Animais, compre uma carta adicional.',escola:'Estelar',art:'stellar'}
+];
+const ANIMALS = [
+ {id:'fox',tipo:'animal',nome:'Raposa Nebulosa',imagem:'',hp:5,ataque:2,custoSombra:2,faseLunar:'Qualquer',efeito:'Ao entrar, compre 1 carta.',escola:'Penumbra',art:'shadow'},
+ {id:'owl',tipo:'animal',nome:'Coruja de Prata',imagem:'',hp:4,ataque:3,custoSombra:3,faseLunar:'Lua Nova',efeito:'Durante Lua Nova, recebe +1 Ataque.',escola:'Estelar',art:'stellar'},
+ {id:'lynx',tipo:'animal',nome:'Lince Boreal',imagem:'',hp:7,ataque:3,custoSombra:3,faseLunar:'Quarto Crescente',efeito:'Resiste ao primeiro dano sofrido a cada rodada.',escola:'Glacial',art:'ice'},
+ {id:'moth',tipo:'animal',nome:'Mariposa do Eclipse',imagem:'',hp:3,ataque:4,custoSombra:4,faseLunar:'Lua Cheia',efeito:'Quando é destruída, cause 2 de dano ao Guardião.',escola:'Penumbra',art:'shadow'},
+ {id:'stag',tipo:'animal',nome:'Cervo Astral',imagem:'',hp:8,ataque:2,custoSombra:4,faseLunar:'Qualquer',efeito:'Animais aliados recebem +1 HP.',escola:'Estelar',art:'stellar'},
+ {id:'wolf',tipo:'animal',nome:'Lobo de Geada',imagem:'',hp:6,ataque:4,custoSombra:4,faseLunar:'Quarto Minguante',efeito:'Se atacar um Animal, causa +1 dano.',escola:'Glacial',art:'ice'},
+ {id:'hare',tipo:'animal',nome:'Lebre Crepuscular',imagem:'',hp:3,ataque:1,custoSombra:1,faseLunar:'Qualquer',efeito:'Pode atacar no turno em que entra.',escola:'Penumbra',art:'shadow'},
+ {id:'ray',tipo:'animal',nome:'Arraia Celeste',imagem:'',hp:5,ataque:2,custoSombra:2,faseLunar:'Lua Cheia',efeito:'Ao entrar, recupere 1 Sombra.',escola:'Estelar',art:'stellar'}
+];
+const SPELLS = [
+ {id:'mist',tipo:'magia',nome:'Manto de Bruma',imagem:'',custoSombra:2,efeito:'Cure 4 HP do seu Guardião.',escola:'Penumbra',art:'shadow'},
+ {id:'meteor',tipo:'magia',nome:'Chuva de Estrelas',imagem:'',custoSombra:3,efeito:'Cause 5 de dano a um Animal inimigo.',escola:'Estelar',art:'stellar'},
+ {id:'freeze',tipo:'magia',nome:'Silêncio Glacial',imagem:'',custoSombra:2,efeito:'Cause 3 de dano a um Animal e ele não pode atacar no próximo turno.',escola:'Glacial',art:'ice'},
+ {id:'eclipse',tipo:'magia',nome:'Beijo do Eclipse',imagem:'',custoSombra:5,efeito:'Cause 4 de dano ao Guardião inimigo.',escola:'Penumbra',art:'shadow'},
+ {id:'constellation',tipo:'magia',nome:'Constelação Guia',imagem:'',custoSombra:2,efeito:'Compre 2 cartas e descarte 1.',escola:'Estelar',art:'stellar'},
+ {id:'frostwall',tipo:'magia',nome:'Muralha de Cristal',imagem:'',custoSombra:3,efeito:'Dê +5 HP a um Animal aliado.',escola:'Glacial',art:'ice'}
+];
+function getCustomCards(){try{return JSON.parse(localStorage.getItem('mists-custom-cards')||'[]')}catch{return []}}
+const CARD_POOL = [...ANIMALS,...getCustomCards().filter(c=>c.tipo!=='magia'&&c.tipo!=='guardiao')];
+const SPELL_POOL = [...SPELLS,...getCustomCards().filter(c=>c.tipo==='magia')];
