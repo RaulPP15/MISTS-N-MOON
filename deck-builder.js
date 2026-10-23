@@ -2,37 +2,15 @@
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const $ = id => document.getElementById(id);
   const getCatalog = () => typeof getCardCatalog === 'function' ? getCardCatalog() : [];
-  const getDecks = () => typeof getSavedDecks === 'function' ? getSavedDecks() : {p1:[],p2:[]};
+  const getGuardians = () => typeof getGuardianCatalog === 'function' ? getGuardianCatalog() : [];
+  const getSpells = () => typeof getSpellCatalog === 'function' ? getSpellCatalog() : [];
+  const getDecks = () => typeof getSavedDecks === 'function' ? getSavedDecks() : {p1:[],p2:[],g1:'',g2:''};
   const save = decks => typeof saveDecks === 'function' && saveDecks(decks);
-  let current = 'p1';
-  function renderEditor(catalog, decks) {
-    const counts = {};
-    decks[current].forEach(id => { counts[id] = (counts[id] || 0) + 1; });
-    const editor = $('deckEditor');
-    if (!editor) return;
-    editor.innerHTML = `<div class="deck-total ${decks[current].length === 30 ? 'valid' : ''}">Total: <strong>${decks[current].length}/30</strong></div><div class="deck-list">${catalog.map(card => `<div class="deck-row"><span>${esc(card.nome)}</span><span class="count-controls"><button type="button" class="small-button deck-minus" data-id="${esc(card.id)}">−</button><strong>${counts[card.id] || 0}</strong><button type="button" class="small-button deck-plus" data-id="${esc(card.id)}">+</button></span></div>`).join('')}</div><button type="button" class="primary-button" id="saveDeckButton" ${decks[current].length === 30 ? '' : 'disabled'}>Salvar deck do ${current === 'p1' ? 'Jogador 1' : 'Jogador 2'}</button>`;
-    editor.querySelectorAll('[data-id]').forEach(button => button.addEventListener('click', () => {
-      const id = button.dataset.id;
-      if (button.classList.contains('deck-plus')) { if (decks[current].length >= 30) return window.MistsMoon.toast('O deck já possui 30 cartas.'); decks[current].push(id); }
-      else { const index = decks[current].lastIndexOf(id); if (index >= 0) decks[current].splice(index, 1); }
-      renderEditor(catalog, decks);
-    }));
-    $('saveDeckButton')?.addEventListener('click', () => { save(decks); window.MistsMoon.toast('Deck salvo para a próxima partida.'); });
-  }
-  function open() {
-    const catalog = getCatalog();
-    const decks = getDecks();
-    window.MistsMoon.openModal(`<h2>Menu de cartas e decks</h2><p class="muted">Cada deck precisa conter exatamente 30 Animais. Guardião e Magias ficam fora da contagem.</p><div class="deck-tabs"><button type="button" class="secondary-button deck-tab active" data-deck="p1">Deck do Jogador 1</button><button type="button" class="secondary-button deck-tab" data-deck="p2">Deck do Jogador 2</button></div><div id="deckEditor"></div><hr><h3>Catálogo de Animais</h3><div class="catalog-grid">${catalog.map(card => `<article class="catalog-item"><div class="mini-art" style="background:${ART[card.art || 'shadow']}"></div><div><b>${esc(card.nome)}</b><small>${esc(card.escola)} · custo ${card.custoSombra}</small></div>${String(card.id).startsWith('custom-') ? `<button type="button" class="danger-button remove-card" data-id="${esc(card.id)}">Remover</button>` : ''}</article>`).join('')}</div><p class="muted">Cartas padrão não podem ser removidas.</p>`);
-    current = 'p1'; renderEditor(catalog, decks);
-    document.querySelectorAll('.deck-tab').forEach(tab => tab.addEventListener('click', () => { current = tab.dataset.deck; document.querySelectorAll('.deck-tab').forEach(item => item.classList.toggle('active', item === tab)); renderEditor(catalog, decks); }));
-    document.querySelectorAll('.remove-card').forEach(button => button.addEventListener('click', () => {
-      const id = button.dataset.id;
-      const custom = getCustomCards().filter(card => card.id !== id);
-      localStorage.setItem('mists-custom-cards', JSON.stringify(custom));
-      decks.p1 = decks.p1.filter(cardId => cardId !== id); decks.p2 = decks.p2.filter(cardId => cardId !== id); save(decks);
-      window.MistsMoon.toast('Carta removida. Recarregue o menu para atualizar o catálogo.');
-      open();
-    }));
-  }
-  window.DeckBuilder = { open };
+  let current='p1';
+  const description = card => card.tipo==='animal' ? `HP ${card.hp} · Ataque ${card.ataque} · Custo ${card.custoSombra} Sombra · Fase: ${card.faseLunar}. ${card.efeito}` : card.tipo==='magia' ? `Custo ${card.custoSombra} Sombra · Escola ${card.escola}. ${card.efeito}` : `HP ${card.hp} · Ataque ${card.ataque} · Sombra inicial ${card.sombraInicial} · Sombra ganha ${card.sombraGanha}. ${card.habilidade}`;
+  function renderEditor(catalog,decks){const counts={};decks[current].forEach(id=>counts[id]=(counts[id]||0)+1);const editor=$('deckEditor');if(!editor)return;editor.innerHTML=`<div class="deck-total ${decks[current].length===30?'valid':''}">Total: <strong>${decks[current].length}/30</strong> <span>Máximo por carta: 5</span></div><div class="deck-list">${catalog.map(card=>`<div class="deck-row"><div><span>${esc(card.nome)}</span><small>${esc(description(card))}</small></div><span class="count-controls"><button type="button" class="small-button deck-minus" data-id="${esc(card.id)}">−</button><strong>${counts[card.id]||0}</strong><button type="button" class="small-button deck-plus" data-id="${esc(card.id)}" ${(counts[card.id]||0)>=5?'disabled':''}>+</button></span></div>`).join('')}</div><button type="button" class="primary-button" id="saveDeckButton" ${decks[current].length===30?'':'disabled'}>Salvar deck do ${current==='p1'?'Jogador 1':'Jogador 2'}</button>`;editor.querySelectorAll('[data-id]').forEach(button=>button.addEventListener('click',()=>{const id=button.dataset.id;const count=decks[current].filter(cardId=>cardId===id).length;if(button.classList.contains('deck-plus')){if(decks[current].length>=30)return window.MistsMoon.toast('O deck já possui 30 cartas.');if(count>=5)return window.MistsMoon.toast('Limite de 5 cópias por carta atingido.');decks[current].push(id)}else{const index=decks[current].lastIndexOf(id);if(index>=0)decks[current].splice(index,1)}renderEditor(catalog,decks)}));$('saveDeckButton')?.addEventListener('click',()=>{save(decks);window.MistsMoon.toast('Deck salvo para a próxima partida.')})}
+  function catalogMarkup(){const animals=getCatalog(),spells=getSpells(),guardians=getGuardians();return `<hr><h3>Catálogo completo</h3><p class="muted">As descrições abaixo mostram os atributos e efeitos de cada carta. Magias ficam exclusivamente na Biblioteca.</p><div class="catalog-section"><h4>Animais da Noite</h4><div class="catalog-grid">${animals.map(card=>item(card,true)).join('')}</div></div><div class="catalog-section"><h4>Magias da Biblioteca</h4><div class="catalog-grid">${spells.map(card=>item(card,false)).join('')}</div></div><div class="catalog-section"><h4>Guardiões da Noite</h4><div class="catalog-grid">${guardians.map(card=>item(card,false)).join('')}</div></div>`}
+  function item(card,removable){return `<article class="catalog-item"><div class="mini-art" style="background:${ART[card.art||'shadow']}"></div><div class="catalog-copy"><b>${esc(card.nome)}</b><small>${esc(description(card))}</small></div>${removable&&String(card.id).startsWith('custom-')?`<button type="button" class="danger-button remove-card" data-id="${esc(card.id)}">Remover</button>`:''}</article>`}
+  function open(){const catalog=getCatalog(),decks=getDecks();const guardians=getGuardians();$('modalContent').innerHTML=`<h2>Gerenciar cartas e decks</h2><p class="muted">Cada deck deve ter exatamente 30 Animais e no máximo 5 cópias da mesma carta. Guardião e Magias ficam fora da contagem.</p><div class="deck-tabs"><button type="button" class="secondary-button deck-tab active" data-deck="p1">Deck do Jogador 1</button><button type="button" class="secondary-button deck-tab" data-deck="p2">Deck do Jogador 2</button></div><div id="guardianSelectors" class="guardian-selectors"><label>Guardião do Jogador 1<select id="guardianP1">${guardians.map(g=>`<option value="${esc(g.id)}" ${decks.g1===g.id?'selected':''}>${esc(g.nome)}</option>`).join('')}</select></label><label>Guardião do Jogador 2<select id="guardianP2">${guardians.map(g=>`<option value="${esc(g.id)}" ${decks.g2===g.id?'selected':''}>${esc(g.nome)}</option>`).join('')}</select></label></div><div id="deckEditor"></div>${catalogMarkup()}`;current='p1';renderEditor(catalog,decks);document.querySelectorAll('.deck-tab').forEach(tab=>tab.addEventListener('click',()=>{current=tab.dataset.deck;document.querySelectorAll('.deck-tab').forEach(item=>item.classList.toggle('active',item===tab));renderEditor(catalog,decks)}));$('guardianP1').addEventListener('change',e=>{decks.g1=e.target.value;save(decks);window.MistsMoon.toast('Guardião do Jogador 1 salvo.')});$('guardianP2').addEventListener('change',e=>{decks.g2=e.target.value;save(decks);window.MistsMoon.toast('Guardião do Jogador 2 salvo.')});document.querySelectorAll('.remove-card').forEach(button=>button.addEventListener('click',()=>{const id=button.dataset.id;const custom=getCustomCards().filter(card=>card.id!==id);localStorage.setItem('mists-custom-cards',JSON.stringify(custom));decks.p1=decks.p1.filter(cardId=>cardId!==id);decks.p2=decks.p2.filter(cardId=>cardId!==id);save(decks);window.MistsMoon.toast('Carta removida.');open()}))}
+  window.DeckBuilder={open};
 })();
